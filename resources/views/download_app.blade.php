@@ -20,7 +20,62 @@
             }
         </style>
     </head>
-    <body class="antialiased">
-            <h1> EmirateNFM  </h1>
+    <body class="antialiased" style=" background: green; opacity: 0.7; ">  
+
+        <div class="cart-footer-fix">
+            <div class="container-fluid">
+            <div class="page-loader" style="background: green">
+                <div class="page-loader-body">
+                    <div class="spinner-grow text-dark" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="spinner-grow text-dark" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="spinner-grow text-dark" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        </div>
+
+        <!-- <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script> -->
+ 
+
+        <script>
+            function getMobileOperatingSystem() {
+                var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+                // Windows Phone must come first because its UA also contains "Android"
+                if (/windows phone/i.test(userAgent)) {
+                    return "Windows Phone";
+                }
+
+                if (/android/i.test(userAgent)) {
+                    return "Android";
+                }
+
+                // iOS detection from: http://stackoverflow.com/a/9039885/177710
+                if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                    return "iOS";
+                }
+
+                return "unknown";
+            }
+        // $(document).ready(function () {
+            console.log(getMobileOperatingSystem());
+            if (getMobileOperatingSystem() == "iOS") {
+                location.href = "https://apps.apple.com/ae/app/emiratesnfm/id6446292401";
+            }else if(getMobileOperatingSystem() == "Android"){
+                location.href = "https://play.google.com/store/apps/details?id=com.ENFM.EmiratesNFM&hl=en&gl=US";
+            }else{
+                location.href = "/"
+            }
+        // })
+        </script>
+        
     </body>
 </html>

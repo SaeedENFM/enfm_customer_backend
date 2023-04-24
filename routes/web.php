@@ -17,15 +17,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/test-url', function () {
+    return view('welcome');
+});
+
+Route::get('/emiratesNFM-mobile-app', function () {
+    return view('download_app');
+});
+
 Route::get('/test-sql', function () {
 
     // dd(bcrypt('123456') );
-    $users = DB::table('users')->where(['UserName' => 'RashidAC', 
-    // "Password" => "123456"
+    $data = DB::table('users')->where(['UserName' => 'RashidAC'  
     ]) 
     ->get(); 
      
-    return response()->json(['users'=>$users]);
+    return response()->json(['data'=>$data]);
 
     // return $users;
     // return "test sql server"; 

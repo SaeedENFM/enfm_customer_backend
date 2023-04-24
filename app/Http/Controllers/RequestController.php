@@ -108,9 +108,19 @@ class RequestController extends Controller
  
                 if ($this->validateCredentails($token)) { 
                     try{  
-                         
-                        $requests = DB::select('exec csr_Pictures_GetImages ?',[$parameters['request_id']]);
-                        return $this->handleResponse($requests, "Request images"); 
+                        $base64_images = [];
+                        $images = DB::select('exec csr_Pictures_GetImages ?',[$parameters['request_id']]);
+                        foreach ($images as $key => $image) {
+                            $base64_images[$key]['requestId'] = $parameters['request_id'];
+                            if ( $image->Picture != null ) { 
+                                $base64_images[$key]['base64Image'] = base64_encode($image->Picture);
+                            }else{
+                                $base64_images[$key]['base64Image'] = $image->NewPicture;
+                            }
+                        }
+                        // dd($images);
+
+                        return $this->handleResponse($base64_images, "Request images"); 
                         
                     }catch (\Exception $e){
                         return $this->handleError($e->getMessage(),400);
@@ -359,25 +369,35 @@ class RequestController extends Controller
 
                         // dd($getRequestNumber[0]);
                         // return $getRequestNumber[0]->CSRNewRequestNo;
+                        // return $this->handleResponse($getRequestNumber[0]->CSRNewRequestNo, 'New request added'); 
+                         
                         $RequestNumber = $getRequestNumber[0]->CSRNewRequestNo; 
                         $SubmittedUserId = $parameters['SubmittedUserId'];
                         $CSRTypeId = $parameters['CSRTypeId']; $BaseunitId = $parameters['BaseunitId']; 
                         $Location = $parameters['Location']; $Title = $parameters['Title']; $Details = $parameters['Details']; 
-                        $CSRStatusId = $parameters['CSRStatusId']; $Rating = 0; $RatingComments = "";
+                        $CSRStatusId = 10; //$parameters['CSRStatusId']; 
+                        $Rating = 0; $RatingComments = "test";
                         $CSRUpdateSourceId = $parameters['CSRUpdateSourceId'];
                         $Comments = $parameters['Comments']; $CurrentOwner = $parameters['CurrentOwner']; 
                         $MasterCommunityId = $parameters['MasterCommunityId']; 
                         $SubCommunityId = $parameters['SubCommunityId']; $ZoneId = $parameters['ZoneId']; 
                         $SubZoneId = $parameters['SubZoneId']; $FaultCodeId = $parameters['FaultCodeId'];
-
-                        $requestID = DB::select('exec csr_NewRequest ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?',[
-                            $RequestNumber,$SubmittedUserId,$CSRTypeId,$BaseunitId,$Location,$Title,$Details,
-                            $CSRStatusId,$Rating,$RatingComments,$CSRUpdateSourceId,$Comments,$CurrentOwner,$MasterCommunityId,
-                            $SubCommunityId,$ZoneId,$SubZoneId,$FaultCodeId
-                        ]);
+                        $id = 5544;
+                        
+                        // $requestIDRE = DB::select('exec csr_NewRequest ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?',[
+                        //     $RequestNumber,$SubmittedUserId,$CSRTypeId,$BaseunitId,$Location,$Title,$Details,
+                        //     $CSRStatusId,$Rating,$RatingComments,$CSRUpdateSourceId,$Comments,$CurrentOwner,$MasterCommunityId,
+                        //     $SubCommunityId,$ZoneId,$SubZoneId,$FaultCodeId
+                        // ]);
+                        $requestID = DB::update("exec csr_NewRequest '$RequestNumber',$SubmittedUserId,$CSRTypeId,$BaseunitId,'$Location','$Title','$Details',$CSRStatusId,$Rating,'$RatingComments',$CSRUpdateSourceId,'$Comments',$CurrentOwner,$MasterCommunityId,$SubCommunityId,$ZoneId,$SubZoneId,$FaultCodeId,$id");
  
+                        if ($requestID < 1) {
+                            $Id = DB::table('CSR_Main')->select('Id')->where(['RequestNumber' => $RequestNumber])->first(); 
+                            return $this->handleResponse($Id, 'New request added');  
+                        }else{
+                            return $this->handleError('Something went wrong',400); 
+                        }
 
-                        return $this->handleResponse($requestID, 'New request added'); 
                     }catch (\Exception $e){
                         return $this->handleError($e->getMessage(),400);
                     } 
@@ -391,6 +411,49 @@ class RequestController extends Controller
 
     }
 
+    public function saveRequestImage(Request $request )
+    {
+        if($request->ismethod('post')){ 
+
+            $rules = array( 
+                'request_id' => 'required',  
+                'base64_image' => 'required',  
+            );
+
+            $validator = Validator::make($request->all(), $rules);
+    
+            if ($validator->fails()) { 
+                return $this->handleError($validator->errors(),404);
+            } else {
+                $token= request()->bearerToken();  
+ 
+                if ($this->validateCredentails($token)) { 
+                    $parameters = $request->all();
+
+                    try{  
+                        $request_id = $parameters['request_id'];
+                        $base64_image = null;
+                        $pic_status = 0;
+                        $location = null; 
+                        $lat = null;
+                        $lon = null; 
+                        $new_pic = $parameters['base64_image'];
+                        $response = DB::select('exec csr_Pictures_Insert ?,?,?,?,?,?,?',[$request_id,$base64_image,$location,$pic_status,$lat,$lon,$new_pic]);
+                        return $this->handleResponse($response, "request image saved"); 
+                        
+                    }catch (\Exception $e){
+                        return $this->handleError($e->getMessage(),400);
+                    } 
+                }else{
+                    return $this->handleError('Authentication Failed',404);
+                } // end validate credentails
+
+            } //end of validator condition
+
+        }// end of check post method 
+
+    } // end of saveRequestImage function
+
 
 
     //---------------------------------------------------------- 
@@ -402,16 +465,16 @@ class RequestController extends Controller
             'status'=>$status,
             'data' => null,
             'message' => $message,
-        ]);
+        ],400);
     }//end of handle error
 
     public function handleResponse($data,$message)
     {
         return response()->json([
             'status'=>200,
-            'data' => $data,
+            'data' => $data ,
             'message' => $message,
-        ]);
+        ],200);
     }//end of handle response
 
     public function decodeJWT($token)

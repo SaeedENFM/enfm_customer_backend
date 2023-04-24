@@ -21,11 +21,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('resquests-history', [RequestController::class, 'history']); 
-Route::post('create-new-resquest', [RequestController::class, 'createNewRequest']); 
+Route::post('requests-history', [RequestController::class, 'history']); 
+Route::post('create-new-request', [RequestController::class, 'createNewRequest']); 
 
 Route::post('get-request-details', [RequestController::class, 'getRequestDetails']); 
 Route::post('get-request-images', [RequestController::class, 'getRequestImages']); 
+Route::post('save-request-image', [RequestController::class, 'saveRequestImage']); 
 
 
 Route::post('get-client-contracts', [RequestController::class, 'getClientContracts']); 
@@ -40,6 +41,8 @@ Route::post('get-service-group-details', [RequestController::class, 'getServiceG
 Route::post('login', [UserController::class, 'login']); 
 
 Route::post('get-user-profile', [UserController::class, 'getUserProfile']); 
+Route::post('update-user-profile', [UserController::class, 'updateProfile']); 
+
 
 
 
