@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,9 @@ Route::get('/test-url', function () {
     return view('welcome');
 });
 
+Route::post('upload-image', [UserController::class, 'uploadImage']);  
+
+
 Route::get('/emiratesNFM-mobile-app', function () {
     return view('download_app');
 });
@@ -28,9 +32,8 @@ Route::get('/emiratesNFM-mobile-app', function () {
 Route::get('/test-sql', function () {
 
     // dd(bcrypt('123456') );
-    $data = DB::table('users')->where(['UserName' => 'RashidAC'  
-    ]) 
-    ->get(); 
+    $data = DB::table('Documents')->where('Base64Image' != null  
+    )->count(); 
      
     return response()->json(['data'=>$data]);
 

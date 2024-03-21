@@ -22,5 +22,14 @@
     </head>
     <body class="antialiased">
             <h1> EmirateNFM  </h1>
+        <form action="{{ url('upload-image') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <input type="file" name="image" />
+            <br>
+            <input type="submit" value="Submit" />
+    </form>
+            
+            
+
     </body>
 </html>

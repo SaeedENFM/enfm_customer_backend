@@ -23,6 +23,13 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $maps = [
+        'Id' => 'id', 
+    ];
+
+    protected $append = ['id'];
+
+
     /**
      * The attributes that should be hidden for serialization.
      *

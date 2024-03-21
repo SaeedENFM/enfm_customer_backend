@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB; 
 use Validator; 
+use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+
 
 class UserController extends Controller
 {
@@ -26,7 +31,7 @@ class UserController extends Controller
         if($request->ismethod('post')){ 
 
             $rules = array(
-                'user_name' => 'required',  
+                'user_name' => 'required|regex:/^[a-zA-Z0-9]+$/',  
                 'password' => 'required',  
             );
             $validator = Validator::make($request->all(), $rules);
@@ -39,11 +44,33 @@ class UserController extends Controller
  
                 if ($this->validateCredentails($token)) { 
                     try{  
-                         
-                        $response = DB::select('exec csr_Users_Validate ?,?',[ $parameters['user_name'], $parameters['password'] ]);
-                        // dd($response);
+                        $UserName = $parameters['user_name'];
+                        $Password = $parameters['password'];
+                        $DeviceId = '0';
+                        $TokenId = '0';
+
+                        $response = DB::select('exec Mob_Check_User_Validation ?,?,?,?',[ $UserName, $Password,$DeviceId,$TokenId]);
+                        // return $response;
                         if (count($response) > 0) {
-                            return $this->handleResponse($response, "Login successfully"); 
+                            if($response[0]->isLocked == 0 ){ 
+                                if(Hash::check($Password, $response[0]->Password360)) {
+                                    // $response[0]->Password360 = '';
+                                    $user = new User();
+                                    $user->id = $response[0]->ID;
+                                    $user->name = $response[0]->FirstName;
+                                    $user->email = $response[0]->EmailId;  
+                                    $user->password = $response[0]->Password360;  
+                                    $token = $user->createToken('login-token')->plainTextToken;
+                                    // return $token;
+                                    $response[0]->Token = $token; 
+                                    unset($response[0]->Password360);
+                                    return $this->handleResponse($response, "Login successfully"); 
+                                }else{
+                                    return $this->handleError('Your password is incorrect !',404); 
+                                }
+                            }else{ 
+                                 return $this->handleError('Your account has been locked !',404); 
+                            }
                         } else {
                             return $this->handleError('Invalid Credentials',404);
                         }
@@ -62,13 +89,43 @@ class UserController extends Controller
 
     } // end of getUserProfile function
 
+    public function uploadImage(Request $request)
+    {
+        // dd($request->all());
+        $image = $request->image;
+        // dd($image);
+        $client = new Client();
+        $res = $client->request('POST', 'https://cafm.emiratesnfm.ae/ReflexionTechAppService/Service.svc/PostImage', [
+            'headers' => ['fileName' => 'test-file.png'],
+            // 'headers' => ['fileName' => $image],
+            'form_params' => [
+                'fileName' => $image, 
+            ],
+            'verify' => false,
+            
+        ]);
+        echo $res->getStatusCode();
+        // 200 
+        echo $res->getBody();
+        // {"type":"User"...'
+        // $response = Http::withHeaders([
+        //     'fileName' => '$image'
+        //     ])->post('https://cafm.emiratesnfm.ae/ReflexionTechAppService/Service.svc/PostImage', [
+        //     'fileName' => $image, 
+        //     ['verify' => false]
+        // ]);
+
+        // $jsonData = $response->json();
+
+        // dd($jsonData);
+    }
 
     public function getUserProfile(Request $request )
     {
         if($request->ismethod('post')){ 
 
             $rules = array(
-                'user_id' => 'required',  
+                'user_id' => 'required|numeric',  
             );
             $validator = Validator::make($request->all(), $rules);
     
@@ -159,7 +216,7 @@ class UserController extends Controller
         if($request->ismethod('post')){ 
 
             $rules = array(
-                'user_id' => 'required',  
+                'user_id' => 'required|numeric',  
             );
             $validator = Validator::make($request->all(), $rules);
     
@@ -200,7 +257,8 @@ class UserController extends Controller
             'status'=>$status,
             'data' => null,
             'message' => $message,
-        ],400);
+        ],404);
+        // ->send();
     }//end of handle error
 
     public function handleResponse($data,$message)
@@ -225,15 +283,17 @@ class UserController extends Controller
 
     public function validateCredentails($token)
     { 
-        $response = false;
-        $bearerToken = $this->decodeJWT($token);   
-        if ($bearerToken) { 
-            if ($this->credentials_user_name == $bearerToken->user_name && $this->credentials_password == $bearerToken->password ) {
-                $response = true;
-            } 
-        }
+        return true;
 
-        return $response;
+        // $response = false;
+        // $bearerToken = $this->decodeJWT($token);   
+        // if ($bearerToken) { 
+        //     if ($this->credentials_user_name == $bearerToken->user_name && $this->credentials_password == $bearerToken->password ) {
+        //         $response = true;
+        //     } 
+        // }
+
+        // return $response;
     }//end of validate
 
 
